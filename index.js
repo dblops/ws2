@@ -26,13 +26,14 @@ async function startClient() {
       },
       headless: true,
       devtools: false,
-      useChrome: true,
+      useChrome: false, // 🚫 Desactivar Chrome para Railway
+      browserArgs: ['--no-sandbox', '--disable-setuid-sandbox'], // ✅ Requerido para entorno cloud
       debug: false,
     });
+
     console.log('Cliente WPPConnect listo');
-    clientReady = true;
   } catch (error) {
-    console.log('Error creando cliente:', error);
+    console.error('Error creando cliente:', error);
   }
 }
 
@@ -46,6 +47,7 @@ app.post('/send', async (req, res) => {
   if (!clientReady) {
     return res.status(500).json({ error: 'Cliente no inicializado aún' });
   }
+
   const { number, message } = req.body;
 
   if (!number || !message) {
@@ -57,6 +59,7 @@ app.post('/send', async (req, res) => {
     const result = await client.sendText(chatId, message);
     res.json({ status: 'ok', result });
   } catch (error) {
+    console.error('Error enviando mensaje:', error);
     res.status(500).json({ error: error.toString() });
   }
 });
