@@ -45,16 +45,33 @@ async function startClient() {
 startClient();
 
 app.get('/qr', (req, res) => {
-  if (!latestQR) return res.status(404).send('QR aún no generado.');
+  if (!latestQR) {
+    return res.status(404).send(`
+      <html>
+        <head><title>QR No disponible</title></head>
+        <body style="text-align:center; font-family:sans-serif;">
+          <h1>QR aún no generado</h1>
+          <p>Por favor espera unos segundos y recarga esta página.</p>
+        </body>
+      </html>
+    `);
+  }
 
-  // Asumimos que latestQR es base64 (sin data:image/png;base64,)
+  // Si latestQR incluye el prefijo "data:image/png;base64,", lo eliminamos para evitar duplicados
+  const qrBase64 = latestQR.startsWith('data:image')
+    ? latestQR.split(',')[1]
+    : latestQR;
+
   res.send(`
     <html>
       <head><title>Escanea el QR</title></head>
       <body style="text-align:center; font-family:sans-serif;">
         <h1>Escanea este código QR con tu WhatsApp</h1>
-        <img src="data:image/png;base64,${latestQR}" style="width:300px;height:300px;" />
+        <img src="data:image/png;base64,${qrBase64}" style="width:300px;height:300px;" />
         <p>Una vez escaneado, esta pantalla se actualizará.</p>
+        <script>
+          setTimeout(() => window.location.reload(), 10000);
+        </script>
       </body>
     </html>
   `);
