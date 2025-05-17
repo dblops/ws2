@@ -2,7 +2,7 @@ const wppconnect = require('@wppconnect-team/wppconnect');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const path = require('path');
+const QRCode = require('qrcode');
 
 const app = express();
 
@@ -11,12 +11,14 @@ app.use(bodyParser.json());
 
 let client;
 let clientReady = false;
+let latestQR = '';
 
 async function startClient() {
   try {
     client = await wppconnect.create({
       session: 'session-boda',
       catchQR: (qr, asciiQR) => {
+        latestQR = qr; // guardar para mostrar en /qr
         console.log('Escanea este código QR con tu WhatsApp:\n', asciiQR);
       },
       statusFind: (statusSession) => {
@@ -27,8 +29,8 @@ async function startClient() {
       },
       headless: true,
       devtools: false,
-      useChrome: true, // ✅ Ahora usamos Chromium del sistema
-      executablePath: '/usr/bin/chromium', // ✅ Ruta del Chromium instalado vía apt
+      useChrome: true,
+      executablePath: '/usr/bin/chromium',
       browserArgs: ['--no-sandbox', '--disable-setuid-sandbox'],
       debug: false,
     });
@@ -40,6 +42,23 @@ async function startClient() {
 }
 
 startClient();
+
+app.get('/qr', async (req, res) => {
+  if (!latestQR) return res.status(404).send('QR aún no generado.');
+  try {
+    const qrDataUrl = await QRCode.toDataURL(latestQR);
+    res.send(`
+      <html>
+        <body style="text-align:center; font-family:sans-serif;">
+          <h1>Escanea este código QR</h1>
+          <img src="${qrDataUrl}" style="width:300px;height:300px;" />
+        </body>
+      </html>
+    `);
+  } catch (err) {
+    res.status(500).send('Error generando el QR.');
+  }
+});
 
 app.get('/status', (req, res) => {
   res.json({ clientReady });
