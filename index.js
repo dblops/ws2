@@ -2,6 +2,7 @@ const wppconnect = require('@wppconnect-team/wppconnect');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 
@@ -26,8 +27,9 @@ async function startClient() {
       },
       headless: true,
       devtools: false,
-      useChrome: false, // 🚫 Desactivar Chrome para Railway
-      browserArgs: ['--no-sandbox', '--disable-setuid-sandbox'], // ✅ Requerido para entorno cloud
+      useChrome: true, // ✅ Ahora usamos Chromium del sistema
+      executablePath: '/usr/bin/chromium', // ✅ Ruta del Chromium instalado vía apt
+      browserArgs: ['--no-sandbox', '--disable-setuid-sandbox'],
       debug: false,
     });
 
@@ -65,7 +67,6 @@ app.post('/send', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en puerto ${PORT}`);
 });
