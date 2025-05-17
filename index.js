@@ -1,13 +1,11 @@
 const wppconnect = require('@wppconnect-team/wppconnect');
 const express = require('express');
-const bodyParser = require('body-parser');
 const cors = require('cors');
-// Ya no necesitas el paquete QRCode porque usaremos el QR base64 directo
 
 const app = express();
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());  // Mejor usar express.json() que bodyParser.json()
 
 let client;
 let clientReady = false;
@@ -18,7 +16,7 @@ async function startClient() {
     client = await wppconnect.create({
       session: 'session-boda',
       catchQR: (qrCode, asciiQR, attempts, urlCode) => {
-        latestQR = qrCode; // Guarda el QR base64 recibido
+        latestQR = qrCode;
         console.log('QR capturado (base64):', qrCode ? qrCode.substring(0, 30) + '...' : 'Vacío');
         console.log('Accede a /qr en tu navegador para escanearlo.');
       },
@@ -57,7 +55,6 @@ app.get('/qr', (req, res) => {
     `);
   }
 
-  // Si latestQR incluye el prefijo "data:image/png;base64,", lo eliminamos para evitar duplicados
   const qrBase64 = latestQR.startsWith('data:image')
     ? latestQR.split(',')[1]
     : latestQR;
@@ -82,6 +79,8 @@ app.get('/status', (req, res) => {
 });
 
 app.post('/send', async (req, res) => {
+  console.log('Body recibido:', req.body);  // DEBUG para ver qué llega
+
   if (!clientReady) {
     return res.status(500).json({ error: 'Cliente no inicializado aún' });
   }
