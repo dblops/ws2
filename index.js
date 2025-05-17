@@ -17,9 +17,9 @@ async function startClient() {
   try {
     client = await wppconnect.create({
       session: 'session-boda',
-      catchQR: (qr, asciiQR) => {
-        latestQR = qr; // guardar para mostrar en /qr
-        console.log('Escanea este código QR con tu WhatsApp:\n', asciiQR);
+      catchQR: (qr) => {
+        latestQR = qr; // Guarda el QR para mostrarlo vía web
+        console.log('QR generado. Accede a /qr en tu navegador para escanearlo.');
       },
       statusFind: (statusSession) => {
         console.log('Estado de la sesión:', statusSession);
@@ -49,9 +49,11 @@ app.get('/qr', async (req, res) => {
     const qrDataUrl = await QRCode.toDataURL(latestQR);
     res.send(`
       <html>
+        <head><title>Escanea el QR</title></head>
         <body style="text-align:center; font-family:sans-serif;">
-          <h1>Escanea este código QR</h1>
+          <h1>Escanea este código QR con tu WhatsApp</h1>
           <img src="${qrDataUrl}" style="width:300px;height:300px;" />
+          <p>Una vez escaneado, esta pantalla se actualizará.</p>
         </body>
       </html>
     `);
@@ -87,5 +89,5 @@ app.post('/send', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Servidor escuchando en puerto ${PORT}`);
+  console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });
